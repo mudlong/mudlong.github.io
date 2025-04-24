@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allay Cleaning Service - Professional Cleaning Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #151152;
+            --secondary-color: #10b981;
+            --accent-color: #f59e0b;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            scroll-behavior: smooth;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+        
+        .service-card {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .service-icon {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .slider-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .slider {
+            display: flex;
+            transition: transform 0.5s ease;
+        }
+        
+        .slider img {
+            width: 100%;
+            flex-shrink: 0;
+            object-fit: cover;
+            height: 100%; /* Ensure images fill the container height */
+        }
+        
+        .slider-nav {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        
+        .slider-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .slider-dot.active {
+            background-color: white;
+            transform: scale(1.2);
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .whatsapp-btn {
+            background-color: #25D366;
+            transition: all 0.3s ease;
+        }
+        
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+            transform: translateY(-2px);
+        }
+        
+        .contact-input {
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .contact-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+        
+        /* Modal styles */
+        #booking-modal.hidden {
+            display: none;
+        }
+        #booking-modal {
+            /* Existing fixed, inset-0, etc. styles handled by Tailwind */
+        }
+        #booking-modal > div {
+             /* Existing bg-white, rounded-lg, etc. styles handled by Tailwind */
+        }
+        
+        @keyframes modal-fade-in {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        #booking-modal .animate-fade-in { /* Specificity for modal animation */
+            animation: modal-fade-in 0.3s ease-out forwards;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-broom text-2xl"></i>
+                    <h1 class="text-2xl font-bold">Allay Cleaning Service</h1>
+                </div>
+                <nav class="hidden md:block">
+                    <ul class="flex space-x-8">
+                        <li><a href="#home" class="hover:text-gray-200 transition">Home</a></li>
+                        <li><a href="#services" class="hover:text-gray-200 transition">Services</a></li>
+                        <li><a href="#gallery" class="hover:text-gray-200 transition">Gallery</a></li>
+                        <li><a href="#video" class="hover:text-gray-200 transition">Video</a></li>
+                        <li><a href="#contact" class="hover:text-gray-200 transition">Contact</a></li>
+                    </ul>
+                </nav>
+                <button class="md:hidden text-xl" id="mobile-menu-button">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div class="md:hidden hidden bg-indigo-700" id="mobile-menu">
+            <div class="container mx-auto px-4 py-4">
+                <ul class="flex flex-col space-y-4">
+                    <li><a href="#home" class="block hover:text-gray-200 transition">Home</a></li>
+                    <li><a href="#services" class="block hover:text-gray-200 transition">Services</a></li>
+                    <li><a href="#gallery" class="block hover:text-gray-200 transition">Gallery</a></li>
+                    <li><a href="#video" class="block hover:text-gray-200 transition">Video</a></li>
+                    <li><a href="#contact" class="block hover:text-gray-200 transition">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="gradient-bg text-white py-20">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center">
+                <div class="md:w-1/2 mb-10 md:mb-0 animate-fade-in">
+                    <h2 class="text-4xl md:text-6xl font-bold mb-4">Professional Cleaning Services</h2>
+                    <p class="text-2xl mb-8">We transform your space into a spotless, fresh environment with our expert cleaning solutions.</p>
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <button class="bg-white text-indigo-600 font-bold py-3 px-6 rounded-lg text-center hover:bg-gray-100 transition book-now-btn">Book Now</button>
+                        <a href="https://wa.me/2347011191480" target="_blank" rel="noopener noreferrer" class="whatsapp-btn text-white font-bold py-3 px-6 rounded-lg text-center flex items-center justify-center space-x-2">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>Chat on WhatsApp</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="md:w-1/2 animate-fade-in" style="animation-delay: 0.2s;">
+                    <div class="slider-container h-80 md:h-[500px]"> <!-- Adjusted height -->
+                        <div class="slider h-full">
+                            <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Clean home">
+                            <img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Professional cleaner">
+                            <img src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1632&q=80" alt="Laundry service">
+                            <img src="https://images.unsplash.com/photo-1600566752355-35792bedcfea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80" alt="Carpet cleaning">
+                            <img src="./Assets/images/Logo.jpg" alt="Company Logo">
+                            <img src="./Assets/images/IMG-20250424-WA0032.jpg" alt="Cleaning Service Example">
+                            <!-- Add more images here. Make sure to update the slider dots below if you add/remove images -->
+                            <!-- Example: <img src="./Assets/images/your_image_name.jpg" alt="Description"> -->
+                        </div>
+                        <div class="slider-nav">
+                            <div class="slider-dot active" data-index="0"></div>
+                            <div class="slider-dot" data-index="1"></div>
+                            <div class="slider-dot" data-index="2"></div>
+                            <div class="slider-dot" data-index="3"></div>
+                            <div class="slider-dot" data-index="4"></div>
+                            <div class="slider-dot" data-index="5"></div>
+                             <!-- Add/remove dots to match the number of images -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-bold mb-4 text-gray-800">Our Cleaning Services</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">We offer a comprehensive range of professional cleaning services tailored to your needs.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Service 1 -->
+                <div class="service-card bg-white p-6 animate-fade-in" style="animation-delay: 0.1s;">
+                    <div class="service-icon mb-4">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3 text-gray-800">New House Cleaning</h3>
+                    <p class="text-lg text-gray-600">Thorough cleaning for new homes, ensuring every corner is spotless before you move in. We handle dust, debris, and construction residue.</p>
+                </div>
+                
+                <!-- Service 2 -->
+                <div class="service-card bg-white p-6 animate-fade-in" style="animation-delay: 0.2s;">
+                    <div class="service-icon mb-4">
+                        <i class="fas fa-tshirt"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Laundry Service</h3>
+                    <p class="text-gray-600">Professional laundry service with careful handling of all fabrics. We wash, dry, fold, and iron your clothes to perfection.</p>
+                </div>
+                
+                <!-- Service 3 -->
+                <div class="service-card bg-white p-6 animate-fade-in" style="animation-delay: 0.3s;">
+                    <div class="service-icon mb-4">
+                        <i class="fas fa-glass-cheers"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">After Party Cleaning</h3>
+                    <p class="text-gray-600">Leave the mess to us after your celebration. We'll handle spills, stains, trash removal, and restore your space to its pre-party condition.</p>
+                </div>
+                
+                <!-- Service 4 -->
+                <div class="service-card bg-white p-6 animate-fade-in" style="animation-delay: 0.4s;">
+                    <div class="service-icon mb-4">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Commercial Cleaning</h3>
+                    <p class="text-gray-600">Professional cleaning for offices, retail spaces, and commercial properties. We maintain clean, healthy work environments.</p>
+                </div>
+                
+                <!-- Service 5 -->
+                <div class="service-card bg-white p-6 animate-fade-in" style="animation-delay: 0.5s;">
+                    <div class="service-icon mb-4">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Grass Trimming</h3>
+                    <p class="text-gray-600">Lawn maintenance and grass trimming services to keep your outdoor spaces neat and well-manicured throughout the year.</p>
+                </div>
+                
+                <!-- Service 6 -->
+                <div class="service-card bg-white p-6 animate-fade-in" style="animation-delay: 0.6s;">
+                    <div class="service-icon mb-4">
+                        <i class="fas fa-rug"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Carpet & Rug Washing</h3>
+                    <p class="text-gray-600">Deep cleaning for carpets and rugs using professional equipment to remove dirt, stains, and allergens while preserving fabric quality.</p>
+                </div>
+                
+                <!-- Service 7 -->
+                <div class="service-card bg-white p-6 animate-fade-in" style="animation-delay: 0.7s;">
+                    <div class="service-icon mb-4">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Car Wash</h3>
+                    <p class="text-gray-600">Complete interior and exterior car cleaning service. We'll make your vehicle shine inside and out with our meticulous detailing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="py-20 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-800">Our Work Gallery</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">See the transformation we bring to homes and businesses.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <!-- Replace these with your actual work images -->
+                <div class="overflow-hidden rounded-lg shadow-lg transition-transform hover:scale-105">
+                    <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1468&q=80" alt="Clean kitchen" class="w-full h-64 object-cover">
+                </div>
+                <div class="overflow-hidden rounded-lg shadow-lg transition-transform hover:scale-105">
+                    <img src="https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80" alt="Pristine living area" class="w-full h-64 object-cover">
+                </div>
+                <div class="overflow-hidden rounded-lg shadow-lg transition-transform hover:scale-105">
+                    <img src="./Assets/images/IMG-20250424-WA0032.jpg" alt="Laundry service result" class="w-full h-64 object-cover">
+                </div>
+                <div class="overflow-hidden rounded-lg shadow-lg transition-transform hover:scale-105">
+                    <img src="https://images.unsplash.com/photo-1600566752355-35792bedcfea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80" alt="Carpet cleaning result" class="w-full h-64 object-cover">
+                </div>
+                <div class="overflow-hidden rounded-lg shadow-lg transition-transform hover:scale-105">
+                    <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Clean living room" class="w-full h-64 object-cover">
+                </div>
+                <div class="overflow-hidden rounded-lg shadow-lg transition-transform hover:scale-105">
+                    <img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Office cleaning result" class="w-full h-64 object-cover">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Section -->
+    <section id="video" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-800">See Us In Action</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Watch our professional team transform spaces with our cleaning expertise.</p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto">
+                <div class="video-container">
+                    <!-- Replace with your actual YouTube video ID -->
+                    <iframe src="https://www.youtube.com/embed/YOUR_YOUTUBE_VIDEO_ID" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-20 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-800">What Our Clients Say</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Hear from satisfied customers who have experienced our cleaning services.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-lg shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400 mr-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-6">"Allay Cleaning transformed my new home before move-in. The attention to detail was incredible - they even cleaned inside the cabinets and behind appliances!"</p>
+                    <div class="flex items-center">
+                        <div class="bg-indigo-100 text-indigo-600 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Sarah Johnson</h4>
+                            <p class="text-gray-500">Homeowner</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-8 rounded-lg shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400 mr-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-6">"Their after-party cleaning service saved me so much time and stress. I hosted a big event and woke up to a spotless house. Worth every penny!"</p>
+                    <div class="flex items-center">
+                        <div class="bg-indigo-100 text-indigo-600 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Michael Brown</h4>
+                            <p class="text-gray-500">Event Host</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-8 rounded-lg shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400 mr-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-6">"We've been using Allay for our office cleaning for 6 months now. The team is professional, reliable, and our workspace has never looked better."</p>
+                    <div class="flex items-center">
+                        <div class="bg-indigo-100 text-indigo-600 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Lisa Chen</h4>
+                            <p class="text-gray-500">Office Manager</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-800">Get In Touch</h2>
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">Ready to experience our professional cleaning services? Contact us today or book directly!</p>
+                    <button class="mt-6 submit-btn text-white font-bold py-3 px-6 rounded-lg book-now-btn">Book Our Services Now</button>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-xl overflow-hidden md:flex">
+                     <div class="md:w-1/2 gradient-bg text-white p-10">
+                        <h3 class="text-2xl font-bold mb-6">Contact Information</h3>
+                        <div class="mb-6 flex items-start">
+                            <div class="mr-4 mt-1">
+                                <i class="fas fa-map-marker-alt text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-1">Our Location</h4>
+                                <p class="text-white opacity-90">Jos, Plateau State, Nigeria</p>
+                            </div>
+                        </div>
+                        <div class="mb-6 flex items-start">
+                            <div class="mr-4 mt-1">
+                                <i class="fas fa-phone-alt text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-1">Phone Number</h4>
+                                <p class="text-white opacity-90">+234 701 119 1480</p>
+                            </div>
+                        </div>
+                        <div class="mb-6 flex items-start">
+                            <div class="mr-4 mt-1">
+                                <i class="fab fa-whatsapp text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-1">WhatsApp</h4>
+                                <a href="https://wa.me/2347011191480" target="_blank" rel="noopener noreferrer" class="text-white opacity-90 hover:underline">+234 701 119 1480</a>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="mr-4 mt-1">
+                                <i class="fas fa-envelope text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-1">Email</h4>
+                                <p class="text-white opacity-90">info@allaycleaningservice.com</p> 
+                            </div>
+                        </div>
+                    </div>
+                    <div class="md:w-1/2 p-10 bg-gray-50">
+                        <h3 class="text-2xl font-bold mb-6 text-gray-800">Send Us a Message</h3>
+                         <form id="contact-form" class="space-y-4">
+                            <div>
+                                <label for="contact-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <input type="text" id="contact-name" name="name" required class="contact-input w-full px-4 py-2 rounded-lg border focus:outline-none">
+                            </div>
+                            <div>
+                                <label for="contact-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" id="contact-email" name="email" required class="contact-input w-full px-4 py-2 rounded-lg border focus:outline-none">
+                            </div>
+                            <div>
+                                <label for="contact-message" class="block text-sm font-medium text-gray-700 mb-1">Your Message</label>
+                                <textarea id="contact-message" name="message" rows="4" required class="contact-input w-full px-4 py-2 rounded-lg border focus:outline-none"></textarea>
+                            </div>
+                            <button type="submit" class="submit-btn w-full text-white font-bold py-3 px-6 rounded-lg">Send Message</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-10">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-broom text-2xl"></i>
+                        <h3 class="text-2xl font-bold">Allay Cleaning Service</h3>
+                    </div>
+                    <p class="text-white opacity-80">Professional cleaning services in Jos and surrounding areas.</p>
+                </div>
+                <div class="flex flex-col space-y-2">
+                    <div class="flex items-center">
+                        <i class="fas fa-phone-alt mr-2"></i>
+                        <span>+234 701 119 1480</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fab fa-whatsapp mr-2"></i>
+                        <a href="https://wa.me/2347011191480" target="_blank" rel="noopener noreferrer" class="hover:underline">Chat on WhatsApp</a>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-envelope mr-2"></i>
+                        <span>info@allaycleaningservice.com</span>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-white border-opacity-20 mt-8 pt-8 text-center text-sm">
+                <p>&copy; 2024 Allay Cleaning Service. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Booking Modal -->
+    <div id="booking-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Book Our Services</h3>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <form id="booking-form" class="space-y-4">
+                <div>
+                    <label for="modal-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="modal-name" name="name" required class="contact-input w-full px-4 py-2 rounded-lg border focus:outline-none">
+                </div>
+                <div>
+                    <label for="modal-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="modal-email" name="email" required class="contact-input w-full px-4 py-2 rounded-lg border focus:outline-none">
+                </div>
+                <div>
+                    <label for="modal-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input type="tel" id="modal-phone" name="phone" required class="contact-input w-full px-4 py-2 rounded-lg border focus:outline-none">
+                </div>
+                <div>
+                    <label for="modal-service" class="block text-sm font-medium text-gray-700 mb-1">Service Needed</label>
+                    <select id="modal-service" name="service" required class="contact-input w-full px-4 py-2 rounded-lg border focus:outline-none">
+                        <option value="">Select a service</option>
+                        <option value="New House Cleaning">New House Cleaning</option>
+                        <option value="Laundry Service">Laundry Service</option>
+                        <option value="After Party Cleaning">After Party Cleaning</option>
+                        <option value="Commercial Cleaning">Commercial Cleaning</option>
+                        <option value="Grass Trimming">Grass Trimming</option>
+                        <option value="Carpet & Rug Washing">Carpet & Rug Washing</option>
+                        <option value="Car Wash">Car Wash</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="modal-date" class="block text-sm font-medium text-gray-700 mb-1">Preferred Date</label>
+                    <input type="date" id="modal-date" name="date" required class="contact-input w-full px-4 py-2 rounded-lg border focus:outline-none">
+                </div>
+                <div>
+                    <label for="modal-message" class="block text-sm font-medium text-gray-700 mb-1">Additional Details</label>
+                    <textarea id="modal-message" name="message" rows="3" class="contact-input w-full px-4 py-2 rounded-lg border focus:outline-none"></textarea>
+                </div>
+                <button type="submit" class="submit-btn w-full text-white font-bold py-3 px-6 rounded-lg">Submit Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script for Slider, Modal, Menu -->
+    <script>
+        // Slider functionality
+        const sliderContainer = document.querySelector('.slider-container');
+        if (sliderContainer) {
+            const slider = sliderContainer.querySelector('.slider');
+            const dots = sliderContainer.querySelectorAll('.slider-dot');
+            let currentIndex = 0;
+            const totalSlides = dots.length;
+
+            function updateSlider() {
+                if (!slider || !dots || dots.length === 0) return;
+                slider.style.transform = `translateX(-${currentIndex * 100}%)`;
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentIndex);
+                });
+            }
+
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    currentIndex = parseInt(dot.dataset.index);
+                    updateSlider();
+                });
+            });
+
+            let slideInterval = setInterval(() => {
+                 if (totalSlides > 0) {
+                    currentIndex = (currentIndex + 1) % totalSlides;
+                    updateSlider();
+                 }
+            }, 5000); 
+            
+            // Optional: Pause slider on hover
+            sliderContainer.addEventListener('mouseenter', () => clearInterval(slideInterval));
+            sliderContainer.addEventListener('mouseleave', () => {
+                slideInterval = setInterval(() => {
+                    if (totalSlides > 0) {
+                        currentIndex = (currentIndex + 1) % totalSlides;
+                        updateSlider();
+                    }
+                }, 5000);
+            });
+            
+             // Initialize slider
+             if (totalSlides > 0) {
+                updateSlider();
+             }
+        }
+        
+        // Modal functionality
+        const bookingModal = document.getElementById('booking-modal');
+        const bookNowButtons = document.querySelectorAll('.book-now-btn'); // Use class selector
+        const closeModalButton = document.getElementById('close-modal');
+        
+        if (bookingModal && closeModalButton) {
+            bookNowButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault(); 
+                    bookingModal.classList.remove('hidden');
+                    bookingModal.classList.add('flex'); // Ensure flex display is added back
+                });
+            });
+            
+            const closeTheModal = () => {
+                bookingModal.classList.add('hidden');
+                bookingModal.classList.remove('flex');
+            };
+
+            closeModalButton.addEventListener('click', closeTheModal);
+            
+            bookingModal.addEventListener('click', (e) => {
+                // Close if clicked outside the modal content
+                if (e.target === bookingModal) {
+                    closeTheModal();
+                }
+            });
+
+             // Close modal on ESC key press
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !bookingModal.classList.contains('hidden')) {
+                    closeTheModal();
+                }
+            });
+        }
+        
+        // Booking Form submission
+        const bookingForm = document.getElementById('booking-form');
+        if (bookingForm) {
+            bookingForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                // Replace alert with a more robust notification or form handling (e.g., fetch to backend)
+                alert('Thank you for your booking! We will contact you shortly.'); 
+                closeTheModal(); // Use the function to close modal
+                e.target.reset();
+            });
+        }
+
+        // Contact Form submission
+        const contactForm = document.getElementById('contact-form');
+        if(contactForm) {
+            contactForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                // Replace alert with actual form submission logic (e.g., using Fetch API or Formspree/Netlify Forms)
+                alert('Thank you for your message! We will get back to you soon.');
+                e.target.reset();
+            });
+        }
+
+        // Mobile Menu Toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Close mobile menu when a link is clicked
+            mobileMenuLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                     mobileMenu.classList.add('hidden');
+                });
+            });
+        }
+
+        // Smooth scrolling for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                // Only prevent default if it's not the modal trigger
+                if (!this.classList.contains('book-now-btn')) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if(targetElement){
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>

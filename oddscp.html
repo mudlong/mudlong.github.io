@@ -1,0 +1,407 @@
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const fs = require('fs');
+
+puppeteer.use(StealthPlugin());
+
+(async () => {
+  const browser = await puppeteer.launch({
+    headless: false,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-web-security',
+      '--disable-features=IsolateOrigins,site-per-process'
+    ],
+    defaultViewport: null,
+    ignoreHTTPSErrors: true,
+    slowMo: 200
+  });
+
+  const page = await browser.newPage();
+  
+  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+  await page.setExtraHTTPHeaders({
+    'accept-language': 'en-US,en;q=0.9'
+  });
+
+  try {
+    console.log('🌐 Navigating to BetKing...');
+    await page.goto('https://www.betking.com/sports/s/event/date/0/1/0/0', {
+      waitUntil: 'networkidle2',
+      timeout: 120000
+    });
+
+    console.log('✅ Page loaded. Waiting for core elements...');
+    await Promise.race([
+      page.waitForSelector('.oddsContainer', { timeout: 30000 }),
+      page.waitForSelector('.oddsTable', { timeout: 30000 }),
+      page.waitForSelector('.eventOddSection-0', { timeout: 30000 })
+    ]);
+
+    console.log('🔄 Scrolling to load all matches...');
+    await autoScroll(page);
+
+    console.log('🔍 Finding all tournaments...');
+    const tournamentData = await page.evaluate(() => {
+      const tournaments = [];
+      const tournamentHeaders = document.querySelectorAll('.tournamentRow');
+      
+      tournamentHeaders.forEach(header => {
+        const tournament = {
+          name: header.querySelector('tr.nohover.tournamentRow > td, .tournament-name, .tournamentRow')?.textContent.trim() || 'Unknown Tournament',
+          matches: []
+        };
+
+        const matchRows = header.closest('tbody').querySelectorAll('tr[id^="match_"]');
+        
+        matchRows.forEach(row => {
+          const match = {
+            id: row.id,
+            date: row.querySelector('.btnDate')?.textContent.trim() || '',
+            teams: row.querySelector('.event-name, .matchName')?.textContent.trim() || 'Unknown Teams',
+            time: row.querySelector('.eventDate, .event-time')?.textContent.trim() || '',
+            mainMarkets: {},    
+            allMarkets: {}
+          };
+
+          // Get main markets (1X2, Double Chance, Over/Under)
+          const oddsCells = row.querySelectorAll('.oddItem');
+          if (oddsCells.length >= 8) {
+            match.mainMarkets = {
+              '1X2': {
+                '1': oddsCells[0]?.textContent.trim(),
+                'X': oddsCells[1]?.textContent.trim(),
+                '2': oddsCells[2]?.textContent.trim()
+              },
+              'Double Chance': {
+                '1X': oddsCells[3]?.textContent.trim(),
+                '12': oddsCells[4]?.textContent.trim(),
+                'X2': oddsCells[5]?.textContent.trim()
+              },
+              'Over/Under 2.5': {
+                'Over': oddsCells[6]?.textContent.trim(),
+                'Under': oddsCells[7]?.textContent.trim()
+              }
+            };
+          }
+          
+          tournament.matches.push(match);
+        });
+        
+        tournaments.push(tournament);
+      });
+      
+      return tournaments;
+    });
+
+    console.log('🖱️ Processing expanded markets for each match...');
+    for (let t = 0; t < tournamentData.length; t++) {
+      for (let m = 0; m < tournamentData[t].matches.length; m++) {
+        const matchId = tournamentData[t].matches[m].id;
+        
+        try {
+          // Scroll to the match
+          await page.evaluate((id) => {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, matchId);
+
+          // Click the expand button
+          await page.evaluate((id) => {
+            const matchRow = document.getElementById(id);
+            const expandBtn = matchRow.querySelector('.moreOdds, [onclick*="showMoreOdds"]');
+            if (expandBtn) expandBtn.click();
+          }, matchId);
+
+          // Wait for markets to appear
+          await page.waitForSelector(`#moreOddsContainer_${matchId.replace('match_', '')}`, { 
+            visible: true, 
+            timeout: 10000 
+          }).catch(() => console.log('No markets container found'));
+
+          // Extract expanded market data
+          tournamentData[t].matches[m].allMarkets = await page.evaluate((id) => {
+            const data = {};
+            const dropdown = document.getElementById(`moreOddsContainer_${id.replace('match_', '')}`);
+            
+            if (dropdown) {
+              const marketGroups = dropdown.querySelectorAll('.subHeader, .market-group');
+              marketGroups.forEach(group => {
+                const marketName = group.querySelector('.headerText, .market-name')?.textContent.trim() || 'Unknown Market';
+                data[marketName] = {};
+                
+                let content = group.nextElementSibling;
+                while (content && !content.classList.contains('content') && !content.querySelector('.inner-content')) {
+                  content = content.nextElementSibling;
+                }
+                
+                if (content) {
+                  const selections = content.querySelectorAll('.inner-content, .event-container');
+                  selections.forEach(sel => {
+                    const name = sel.querySelector('.inner-content, .eventPopup, span:first-child, .innerOddItem:first-child')?.textContent.trim() || 'Unknown';
+                    const odd = sel.querySelector('.oddBorder, .innerOddItem:last-child')?.textContent.trim() || '';
+                    if (name && odd) data[marketName][name] = odd;
+                  });
+                }
+              });
+            }
+            return data;
+          }, matchId);
+
+          // Close the dropdown
+          await page.evaluate((id) => {
+            const matchRow = document.getElementById(id);
+            const expandBtn = matchRow.querySelector('.moreOdds, [onclick*="showMoreOdds"]');
+            if (expandBtn && expandBtn.getAttribute('aria-expanded') === 'true') {
+              expandBtn.click();
+            }
+          }, matchId);
+
+          console.log(`✅ Processed match ${m+1}/${tournamentData[t].matches.length} in tournament ${t+1}/${tournamentData.length}`);
+        } catch (error) {
+          console.error(`❌ Failed to process match ${matchId}:`, error.message);
+          await page.screenshot({ path: `error-${matchId}.png` });
+        }
+      }
+    }
+
+    // Save to JSON file
+    const filename = `betking-complete-data-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    fs.writeFileSync(filename, JSON.stringify(tournamentData, null, 2));
+    console.log(`✅ Saved ${tournamentData.length} tournaments with complete market data to ${filename}`);
+
+    // Show sample output
+    if (tournamentData.length > 0 && tournamentData[0].matches.length > 0) {
+      console.log('\n=== SAMPLE OUTPUT ===');
+      const sampleTournament = tournamentData[0];
+      const sampleMatch = tournamentData[0].matches[0];
+      console.log(`Tournament: ${sampleTournament.name}`);
+      console.log(`Match: ${sampleMatch.teams}`);
+      console.log(`Date: ${sampleMatch.date} | Time: ${sampleMatch.time}`);
+      console.log('Main Markets:', Object.keys(sampleMatch.mainMarkets));
+      console.log('Expanded Markets:', Object.keys(sampleMatch.allMarkets));
+    }
+
+  } catch (error) {
+    console.error('❌ Main error:', error);
+    await page.screenshot({ path: 'error.png', fullPage: true });
+  } finally {
+    await browser.close();
+  }
+})();
+
+async function autoScroll(page) {
+  await page.evaluate(async () => {
+    await new Promise(resolve => {
+      let totalHeight = 0;
+      const distance = 800;
+      const timer = setInterval(() => {
+        window.scrollBy(0, distance);
+        totalHeight += distance;
+        if (totalHeight >= document.body.scrollHeight) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 2000);
+    });
+  });
+}
+
+
+// const puppeteer = require('puppeteer-extra');
+// const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+// const fs = require('fs');
+
+// puppeteer.use(StealthPlugin());
+
+// (async () => {
+//   const browser = await puppeteer.launch({
+//     headless: false,
+//     args: [
+//       '--no-sandbox',
+//       '--disable-setuid-sandbox',
+//       '--disable-web-security',
+//       '--disable-features=IsolateOrigins,site-per-process'
+//     ],
+//     defaultViewport: null,
+//     ignoreHTTPSErrors: true,
+//     slowMo: 200 // Slower interactions for reliability
+//   });
+
+//   const page = await browser.newPage();
+  
+//   // Set realistic browser fingerprints
+//   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+//   await page.setExtraHTTPHeaders({
+//     'accept-language': 'en-US,en;q=0.9'
+//   });
+
+//   try {
+//     console.log('🌐 Navigating to BetKing...');
+//     await page.goto('https://www.betking.com/sports/s/event/date/0/1/0/0', {
+//       waitUntil: 'domcontentloaded',
+//       timeout: 60000
+//     });
+
+//     console.log('✅ Waiting for matches to load...');
+//     await page.waitForSelector('tr[id^="match_"]', { timeout: 30000 });
+
+//     console.log('🔄 Scrolling to load all matches...');
+//     await autoScroll(page);
+
+//     console.log('🔍 Finding all match rows...');
+//     const matchIds = await page.evaluate(() => {
+//       return Array.from(document.querySelectorAll('tr[id^="match_"]')).map(el => el.id);
+//     });
+
+//     const allMatchesData = [];
+//     const maxMatches = 4; // Set to higher number when ready
+
+//     console.log(`🛠 Processing ${Math.min(maxMatches, matchIds.length)} matches one-by-one...`);
+//     for (let i = 0; i < Math.min(maxMatches, matchIds.length); i++) {
+//       const matchId = matchIds[i];
+//       console.log(`\n=== PROCESSING MATCH ${i+1}/${Math.min(maxMatches, matchIds.length)} (${matchId}) ===`);
+
+//       try {
+//         // Scroll to the match
+//         await page.evaluate((id) => {
+//           document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'center' });
+//         }, matchId);
+
+//         // Click the expand button
+//         console.log('🖱️ Clicking expand button...');
+//         await page.evaluate((id) => {
+//           const matchRow = document.getElementById(id);
+//           const expandBtn = matchRow.querySelector('.moreOdds, [onclick*="showMoreOdds"]');
+//           if (expandBtn) expandBtn.click();
+//         }, matchId);
+
+//         // Wait for markets to appear
+//         console.log('⏳ Waiting for markets...');
+//         await page.waitForSelector(`#moreOddsContainer_${matchId.replace('match_', '')}`, { 
+//           visible: true, 
+//           timeout: 10000 
+//         }).catch(() => console.log('No markets container found'));
+
+//         // Extract data for this match only
+//         console.log('📊 Extracting match data...');
+//         const matchData = await page.evaluate((id) => {
+//           const matchRow = document.getElementById(id);
+//           const data = {
+//             id: id,
+//             teams: matchRow.querySelector('.matchName, .event-name')?.textContent.trim() || 'Unknown Teams',
+//             time: matchRow.querySelector('.eventDate, .event-date')?.textContent.trim() || '',
+//             markets: {}
+//           };
+
+//           // Find the markets container
+//           const dropdownId = `moreOddsContainer_${id.replace('match_', '')}`;
+//           const dropdown = document.getElementById(dropdownId);
+          
+//           if (dropdown) {
+//             // Process each market group
+//             const marketGroups = dropdown.querySelectorAll('.subHeader, .market-group');
+//             marketGroups.forEach(group => {
+//               const marketName = group.querySelector('.headerText')?.textContent.trim() || 'Unknown Market';
+//               data.markets[marketName] = {};
+              
+//               // Find all selections in this market
+//                     let content = group.nextElementSibling;
+//       while (content && !content.classList.contains('content') && !content.querySelector('.inner-content')) {
+//         content = content.nextElementSibling;
+//       }
+      
+//       if (content) {
+//         // Find all selection rows - multiple selector options
+//         const selections = content.querySelectorAll(`
+//           .inner-content,
+//           .event-container,
+//           .vs-repeat-repeated-element,
+//           .market-selections > div
+//         `);
+        
+//         selections.forEach(selection => {
+//           // Try multiple ways to get the selection name
+//           const nameElement = selection.querySelector(`
+//             .selection-name,
+//             .inner-content,
+//             .eventPopup,
+//             .innerOddItem:first-child,
+//             span:first-child
+//           `);
+          
+//           // Try multiple ways to get the odd value
+//           const oddElement = selection.querySelector(`
+//             .oddBorder,
+//             .innerOddItem:last-child,
+//             .match-odd,
+//             span:last-child
+//           `);
+          
+//           const name = nameElement?.textContent.trim().replace(/\s+/g, ' ') || 'Unknown';
+//           const odd = oddElement?.textContent.trim() || '';
+//               // let content = group.nextElementSibling;
+//               // while (content && !content.classList.contains('content')) {
+//               //   content = content.nextElementSibling;
+//               // }
+              
+//               // if (content) {
+//               //   content.querySelectorAll('.event-container,.selection-row').forEach(row => {
+//               //     const name = row.querySelector('.inner-content, .eventPopup, .selection-name')?.textContent.trim() || 'Unknown';
+//               //     const odd = row.querySelector('.innerOddItem, .selection-odd')?.textContent.trim() || '';
+//                   if (name && odd) data.markets[marketName][name] = odd; else {console.warn('no find odds name')}
+//                 });
+//               }
+//             });
+//           }
+          
+//           return data;
+//         }, matchId);
+
+//         allMatchesData.push(matchData);
+//         console.log(`✅ Successfully extracted ${Object.keys(matchData.markets).length} markets`);
+
+//         // Close the dropdown before moving to next match
+//         await page.evaluate((id) => {
+//           const matchRow = document.getElementById(id);
+//           const expandBtn = matchRow.querySelector('.moreOdds, [onclick*="showMoreOdds"]');
+//           if (expandBtn && expandBtn.getAttribute('aria-expanded') === 'true') {
+//             expandBtn.click();
+//           }
+//         }, matchId);
+
+//       } catch (error) {
+//         console.error(`❌ Failed to process match ${matchId}:`, error.message);
+//         await page.screenshot({ path: `error-${matchId}.png` });
+//       }
+//     }
+
+//     // Save all collected data
+//     const filename = `betking-data-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+//     fs.writeFileSync(filename, JSON.stringify(allMatchesData, null, 2));
+//     console.log(`\n💾 Saved data for ${allMatchesData.length} matches to ${filename}`);
+
+//   } catch (error) {
+//     console.error('❌ Main error:', error);
+//     await page.screenshot({ path: 'main-error.png' });
+//   } finally {
+//     await browser.close();
+//   }
+// })();
+
+// async function autoScroll(page) {
+//   await page.evaluate(async () => {
+//     await new Promise(resolve => {
+//       let totalHeight = 0;
+//       const distance = 500;
+//       const timer = setInterval(() => {
+//         window.scrollBy(0, distance);
+//         totalHeight += distance;
+//         if (totalHeight >= document.body.scrollHeight) {
+//           clearInterval(timer);
+//           resolve();
+//         }
+//       }, 1000);
+//     });
+//   });
+// }
